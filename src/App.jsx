@@ -21,6 +21,11 @@ const GLOBAL_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  section,
+  div,
+  main {
+    min-width: 0;
+  }
   html { scroll-behavior: smooth; overflow-x: hidden; max-width: 100%; }
   body {
     font-family: 'DM Sans', sans-serif;
@@ -29,6 +34,10 @@ const GLOBAL_CSS = `
     line-height: 1.6;
     font-size: 15px;
     overflow-x: hidden;
+  }
+  img {
+    max-width: 100%;
+    display: block;
   }
   ::selection { background: ${C.green}; color: ${C.cream}; }
   :focus-visible { outline: 2px solid ${C.greenLight}; outline-offset: 3px; }
@@ -70,7 +79,7 @@ const GLOBAL_CSS = `
   }
 
   @media (max-width: 860px) {
-    .about-grid   { grid-template-columns: 1fr !important; }
+    .about-grid   { grid-template-columns: 1fr !important; gap: 2rem !important; }
     .contact-grid { grid-template-columns: 1fr !important; }
     .about-sticky { 
     position: static !important; 
@@ -333,9 +342,18 @@ function About() {
         display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1.45fr)",
         gap: "5rem", alignItems: "start",
       }}>
-        <div className="about-sticky" style={{ position: "sticky", top: "12rem", display: "flex", flexDirection: "column" }}>
+        <div
+          className="about-sticky"
+          style={{
+            minWidth: 0,
+            position: "sticky",
+            top: "12rem",
+            display: "flex",
+            flexDirection: "column"
+          }}
+        >
           <div style={{
-            width: "100%", maxWidth: 260, aspectRatio: "3/4",
+            width: "100%", maxWidth: "260px", minWidth: 0, aspectRatio: "3/4",
             background: C.bgCard, border: `1px solid ${C.border}`,
             borderRadius: 8, display: "flex", flexDirection: "column",
             alignItems: "center", justifyContent: "center",
@@ -365,7 +383,7 @@ function About() {
           </div>
         </div>
 
-        <div>
+        <div style={{ minWidth: 0 }}>
           <SectionTitle>Building web experiences with intention.</SectionTitle>
           <p key={0} style={{ color: C.pale, lineHeight: 1.85, marginBottom: "1.3rem", fontSize: "0.97rem" }}>
             Hi — I'm <strong style={{ color: C.cream }}>Christian <strong style={{ color: C.accent }}>Teja</strong> Pranata</strong>, a web developer based in Surabaya, Indonesia. I build landing pages for small businesses and founders who need more than something that looks decent — they need a page that gets people to act.
