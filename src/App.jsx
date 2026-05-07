@@ -73,6 +73,8 @@ const GLOBAL_CSS = `
     .about-grid   { grid-template-columns: 1fr !important; }
     .contact-grid { grid-template-columns: 1fr !important; }
     .about-sticky { position: static !important; align-items: center !important; }
+    .about-img    { max-width: 100% !important; }
+    .about-section { overflow: hidden !important; padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
     .proj-tags    { display: none !important; }
     .proj-row     { grid-template-columns: 64px 1fr !important; }
     .hide-mobile  { display: none !important; }
@@ -320,7 +322,7 @@ function Hero() {
 function About() {
   const stack = ["HTML5", "CSS3", "JavaScript", "React", "Responsive", "Figma", "Git", "Vite", "EmailJS", "TailwindCSS"];
   return (
-    <section id="about" style={{ padding: "7rem clamp(1.5rem, 5vw, 4rem)", background: C.bgSection }}>
+    <section id="about" className="about-section" style={{ padding: "7rem clamp(1.5rem, 5vw, 4rem)", background: C.bgSection }}>
       <SectionLabel>About me</SectionLabel>
       <div className="about-grid" style={{
         display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1.45fr)",
