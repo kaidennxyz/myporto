@@ -403,7 +403,7 @@ function About() {
                 background: C.bgCard, padding: "1.4rem 1.2rem",
                 display: "flex", flexDirection: "column", gap: 4,
               }}>
-                <span style={{ fontFamily: "'Barium', serif", fontSize: "1.6rem", color: C.accent, lineHeight: 1 }}>{num}</span>
+                <span style={{ fontFamily: "'Barium', serif", fontSize: "clamp(1.4rem, 4vw, 2rem)", color: C.accent, lineHeight: 1 }}>{num}</span>
                 <span style={{ fontSize: "0.78rem", color: C.muted, letterSpacing: "0.04em" }}>{label}</span>
               </div>
             ))}
