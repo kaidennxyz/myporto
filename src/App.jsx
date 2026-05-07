@@ -77,6 +77,7 @@ const GLOBAL_CSS = `
     .proj-row     { grid-template-columns: 64px 1fr !important; }
     .hide-mobile  { display: none !important; }
     .step-grid    { grid-template-columns: 1fr 1fr !important; }
+    .stack-chips { max-width: 100% !important; overflow: hidden !important; }
   }
   @media (max-width: 560px) {
     .stats-grid { grid-template-columns: repeat(3, 1fr) !important; }
@@ -345,7 +346,7 @@ function About() {
               padding: "4px 10px", borderRadius: 3, fontWeight: 700,
             }}>Available</span>
           </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 7, maxWidth: "100%", overflow: "hidden" }}>
             {stack.map(s => (
               <span key={s} style={{
                 fontFamily: "'DM Mono', monospace", fontSize: "0.7rem",
