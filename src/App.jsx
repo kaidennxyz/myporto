@@ -21,7 +21,7 @@ const GLOBAL_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; overflow-x: hidden; max-width: 100%; }
   body {
     font-family: 'DM Sans', sans-serif;
     background: ${C.bg};
@@ -72,7 +72,12 @@ const GLOBAL_CSS = `
   @media (max-width: 860px) {
     .about-grid   { grid-template-columns: 1fr !important; }
     .contact-grid { grid-template-columns: 1fr !important; }
-    .about-sticky { position: static !important; align-items: center !important; }
+    .about-sticky { 
+    position: static !important; 
+    align-items: center !important;
+    max-width: 100% !important;
+    width: 100% !important;
+   }
     .about-img    { max-width: 100% !important; }
     .about-section { overflow: hidden !important; padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
     .proj-tags    { display: none !important; }
@@ -348,7 +353,7 @@ function About() {
               padding: "4px 10px", borderRadius: 3, fontWeight: 700,
             }}>Available</span>
           </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 7, maxWidth: "100%", overflow: "hidden" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 7, width: "100%", boxSizing: "border-box" }}>
             {stack.map(s => (
               <span key={s} style={{
                 fontFamily: "'DM Mono', monospace", fontSize: "0.7rem",
