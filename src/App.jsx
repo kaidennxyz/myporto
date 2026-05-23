@@ -508,12 +508,12 @@ function Services() {
 // ─── PROJECTS ────────────────────────────────────────────────────────────────
 
 const PROJECTS = [
-{ num: "001", title: "Brunsj — Bake House Surabaya", desc: "Warm and inviting storefront page for a local Surabaya bakery, featuring the menu, daily specials, and brand story.", tags: ["React", "CSS Animations"] },
-{ num: "002", title: "Klea — Model Portfolio", desc: "Sleek editorial portfolio for a model and muse, with full-bleed imagery, a lookbook grid, and minimal typography.", tags: ["HTML", "CSS", "JS"] },
-{ num: "003", title: "UT Admin — Lecturer Dashboard", desc: "Clean and functional admin panel for Universitas Terbuka lecturers, with course management, student data, and activity controls.", tags: ["React", "Dashboard", "Responsive"] },
+{ num: "001", title: "Brunsj — Bake House Surabaya", link:"https://brunsj-site.vercel.app", desc: "Warm and inviting storefront page for a local Surabaya bakery, featuring the menu, daily specials, and brand story.", tags: ["React", "CSS Animations"] },
+{ num: "002", title: "Klea — Model Portfolio", link:"https://porto-klea.vercel.app", desc: "Sleek editorial portfolio for a model and muse, with full-bleed imagery, a lookbook grid, and minimal typography.", tags: ["HTML", "CSS", "JS"] },
+{ num: "003", title: "UT Admin — Lecturer Dashboard", link:"", desc: "Clean and functional admin panel for Universitas Terbuka lecturers, with course management, student data, and activity controls.", tags: ["React", "Dashboard", "Responsive"] },
 ];
 
-function ProjectRow({ num, title, desc, tags }) {
+function ProjectRow({ num, title, desc, tags, link }) {
   const [hov, setHov] = useState(false);
   return (
     <div className="proj-row"
@@ -530,11 +530,20 @@ function ProjectRow({ num, title, desc, tags }) {
         letterSpacing: "0.06em", transition: "color 0.2s",
       }}>{num}</span>
       <div>
-        <h3 style={{
-          fontSize: "1rem", fontWeight: 500,
-          color: hov ? C.cream : C.pale,
-          marginBottom: "0.25rem", transition: "color 0.2s",
-        }}>{title}</h3>
+        {link ? (
+          <a href={link} target="_blank" rel="noopener noreferrer" style={{
+            fontSize: "1rem", fontWeight: 500,
+            color: hov ? C.cream : C.pale,
+            marginBottom: "0.25rem", transition: "color 0.2s",
+            textAlign: "left", textDecoration: "none", display: "block",
+          }}>{title} ↗</a>
+        ) : (
+          <p style={{
+            fontSize: "1rem", fontWeight: 500,
+            color: hov ? C.cream : C.pale,
+            marginBottom: "0.25rem", transition: "color 0.2s",
+          }}>{title}</p>
+        )}
         <p style={{ fontSize: "0.82rem", color: C.muted }}>{desc}</p>
       </div>
       <div className="proj-tags" style={{ display: "flex", gap: 7, flexWrap: "wrap", justifyContent: "flex-end" }}>
