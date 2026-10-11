@@ -1,221 +1,110 @@
 import emailjs from '@emailjs/browser';
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import myFace from './assets/myFace.jpeg';
 
-// ─── DESIGN TOKENS ───────────────────────────────────────────────────────────
-const C = {
-  bg:         "#0f1f16",
-  bgCard:     "#162a1d",
-  bgSection:  "#1a3022",
-  border:     "#2a4534",
-  green:      "#3d7a5e",
-  greenLight: "#6aab8a",
-  pale:       "#c8ddd4",
-  cream:      "#eef4f0",
-  accent:     "#c6a96c",
-  muted:      "#7a9e8a",
-};
-
-// ─── INJECT GLOBAL STYLES ────────────────────────────────────────────────────
-const GLOBAL_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: ${C.bg};
-    color: ${C.cream};
-    line-height: 1.6;
-    font-size: 15px;
-    overflow-x: hidden;
-  }
-  ::selection { background: ${C.green}; color: ${C.cream}; }
-  :focus-visible { outline: 2px solid ${C.greenLight}; outline-offset: 3px; }
-
-  section[id] {
-    scroll-margin-top: 80px;
-  }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(28px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes scrollPulse {
-    0%, 100% { transform: scaleX(1); opacity: 0.8; }
-    50%       { transform: scaleX(0.3); opacity: 0.25; }
-  }
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0; }
-  }
-
-  .fu0 { animation: fadeUp 0.65s ease both 0.05s; }
-  .fu1 { animation: fadeUp 0.65s ease both 0.2s;  }
-  .fu2 { animation: fadeUp 0.65s ease both 0.35s; }
-  .fu3 { animation: fadeUp 0.65s ease both 0.5s;  }
-  .fu4 { animation: fadeUp 0.65s ease both 0.65s; }
-
-  .scroll-line {
-    width: 40px; height: 1px; background: ${C.muted};
-    display: block;
-    animation: scrollPulse 2.4s ease-in-out infinite;
-    transform-origin: left;
-  }
-  .cursor-blink {
-    display: inline-block; width: 3px; height: 0.82em;
-    background: ${C.accent}; margin-left: 3px;
-    vertical-align: middle;
-    animation: blink 1s step-end infinite;
-  }
-
-  @media (max-width: 860px) {
-    .about-grid   { grid-template-columns: 1fr !important; }
-    .contact-grid { grid-template-columns: 1fr !important; }
-    .about-sticky { position: static !important; align-items: center !important; }
-    .proj-tags    { display: none !important; }
-    .proj-row     { grid-template-columns: 64px 1fr !important; }
-    .hide-mobile  { display: none !important; }
-    .step-grid    { grid-template-columns: 1fr 1fr !important; }
-    .stack-chips { max-width: 100% !important; overflow: hidden !important; }
-  }
-  @media (max-width: 560px) {
-    .stats-grid { grid-template-columns: repeat(3, 1fr) !important; }
-    .step-grid  { grid-template-columns: 1fr !important; }
-  }
-`;
-
-function GlobalStyles() {
-  useEffect(() => {
-    const el = document.createElement("style");
-    el.textContent = GLOBAL_CSS;
-    document.head.appendChild(el);
-    return () => document.head.removeChild(el);
-  }, []);
-  return null;
-}
+const prefersReducedMotion = () =>
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // ─── SHARED ──────────────────────────────────────────────────────────────────
 
-function SectionLabel({ children }) {
+function SectionLabel({ num, children }) {
   return (
-    <div style={{
-      display: "flex", alignItems: "center", gap: 10,
-      fontSize: "0.72rem", letterSpacing: "0.16em", textTransform: "uppercase",
-      color: C.greenLight, fontWeight: 500, marginBottom: "1rem",
-    }}>
-      <span style={{ width: 28, height: 1, background: C.greenLight, flexShrink: 0 }} />
+    <div className="label" data-reveal>
+      <b>{num}</b>
       {children}
     </div>
   );
 }
 
-function SectionTitle({ children, style = {} }) {
-  return (
-    <h2 style={{
-      fontFamily: "'Barium', 'Georgia', serif",
-      fontSize: "clamp(1.9rem, 3.5vw, 2.8rem)",
-      fontWeight: 400, color: C.cream, lineHeight: 1.12,
-      marginBottom: "3rem", letterSpacing: "-0.01em",
-      ...style,
-    }}>
-      {children}
-    </h2>
-  );
+function SectionTitle({ children }) {
+  return <h2 className="title" data-reveal>{children}</h2>;
 }
 
-function BtnPrimary({ children, href = "#", onClick, style = {} }) {
-  const [hov, setHov] = useState(false);
-  return (
-    <a href={href} onClick={onClick}
-      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      style={{
-        display: "inline-flex", alignItems: "center", gap: 8,
-        background: hov ? C.greenLight : C.green,
-        color: C.bg, padding: "0.75rem 1.8rem", borderRadius: 4,
-        fontSize: "0.85rem", fontWeight: 600, letterSpacing: "0.05em",
-        textDecoration: "none", cursor: "pointer",
-        transition: "background 0.2s, transform 0.15s",
-        transform: hov ? "translateY(-2px)" : "none",
-        ...style,
-      }}
-    >
-      {children}
-    </a>
-  );
-}
-
-function BtnOutline({ children, href = "#" }) {
-  const [hov, setHov] = useState(false);
-  return (
-    <a href={href}
-      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      style={{
-        display: "inline-flex", alignItems: "center", gap: 8,
-        background: "transparent", color: hov ? C.cream : C.pale,
-        padding: "0.75rem 1.8rem", borderRadius: 4,
-        fontSize: "0.85rem", fontWeight: 500, letterSpacing: "0.05em",
-        textDecoration: "none", border: `1.5px solid ${hov ? C.pale : C.border}`,
-        transition: "all 0.2s", transform: hov ? "translateY(-2px)" : "none",
-      }}
-    >
-      {children}
-    </a>
-  );
+// Fades elements marked with [data-reveal] in as they scroll into view.
+function useReveal() {
+  useEffect(() => {
+    const els = document.querySelectorAll("[data-reveal]");
+    if (!("IntersectionObserver" in window)) {
+      els.forEach(el => el.classList.add("is-in"));
+      return;
+    }
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-in");
+        io.unobserve(entry.target);
+      });
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
+    els.forEach(el => io.observe(el));
+    return () => io.disconnect();
+  }, []);
 }
 
 // ─── NAV ─────────────────────────────────────────────────────────────────────
 
-function NavLink({ children, href }) {
-  const [hov, setHov] = useState(false);
-  return (
-    <li>
-      <a href={href}
-        onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-        style={{
-          textDecoration: "none", fontSize: "0.79rem",
-          letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 500,
-          color: hov ? C.cream : C.muted, transition: "color 0.2s",
-        }}
-      >
-        {children}
-      </a>
-    </li>
-  );
-}
+const NAV_LINKS = ["About", "Services", "Work", "Process"];
 
 function Nav() {
   const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
+
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", fn);
+    fn();
+    window.addEventListener("scroll", fn, { passive: true });
     return () => window.removeEventListener("scroll", fn);
   }, []);
 
+  useEffect(() => {
+    document.body.classList.toggle("menu-open", open);
+    if (!open) return;
+    const onKey = e => e.key === "Escape" && setOpen(false);
+    const onResize = () => window.innerWidth > 860 && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [open]);
+
+  const close = () => setOpen(false);
+
   return (
-    <nav style={{
-      position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "1.1rem clamp(1.5rem, 5vw, 4rem)",
-      background: scrolled ? "rgba(15,31,22,0.94)" : "transparent",
-      backdropFilter: scrolled ? "blur(16px)" : "none",
-      borderBottom: scrolled ? `1px solid ${C.border}` : "none",
-      transition: "background 0.35s, border 0.35s",
-    }}>
-      <a href="#" style={{
-        fontFamily: "'Barium', 'Georgia', serif",
-        fontSize: "1.4rem", color: C.cream,
-        textDecoration: "none", letterSpacing: "0.03em",
-      }}>
-        Teja<span style={{ color: C.accent }}>.</span>
-      </a>
-      <ul className="hide-mobile" style={{ display: "flex", gap: "2.2rem", listStyle: "none" }}>
-        {["About", "Services", "Work", "Process"].map(l => (
-          <NavLink key={l} href={`#${l.toLowerCase()}`}>{l}</NavLink>
-        ))}
-      </ul>
-      <BtnPrimary href="#contact">Hire me</BtnPrimary>
-    </nav>
+    <>
+      <nav className={`nav${scrolled ? " is-scrolled" : ""}${open ? " is-open" : ""}`} aria-label="Main">
+        <a href="#" className="brand" onClick={close}>Teja<i>.</i></a>
+        <ul className="nav-links">
+          {NAV_LINKS.map(l => (
+            <li key={l}><a href={`#${l.toLowerCase()}`}>{l}</a></li>
+          ))}
+        </ul>
+        <div className="nav-right">
+          <a href="#contact" className="btn btn--primary" onClick={close}>Hire me</a>
+          <button
+            type="button" className="burger"
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open} aria-controls="menu"
+            onClick={() => setOpen(o => !o)}
+          >
+            <span /><span />
+          </button>
+        </div>
+      </nav>
+
+      <div id="menu" className={`menu${open ? " is-open" : ""}`} aria-hidden={!open}>
+        <ul>
+          {[...NAV_LINKS, "Contact"].map((l, i) => (
+            <li key={l}>
+              <a href={`#${l.toLowerCase()}`} onClick={close} tabIndex={open ? 0 : -1}>
+                <small>{`0${i + 1}`}</small>{l}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <p>Web Developer · Surabaya, Indonesia</p>
+      </div>
+    </>
   );
 }
 
@@ -223,12 +112,14 @@ function Nav() {
 
 const TYPED_WORDS = ["landing pages.", "React interfaces.", "web experiences.", "purposeful UIs."];
 
-function Hero() {
+function Typed() {
+  const [reduced] = useState(prefersReducedMotion);
   const [wordIdx, setWordIdx] = useState(0);
   const [displayed, setDisplayed] = useState("");
   const [typing, setTyping] = useState(true);
 
   useEffect(() => {
+    if (reduced) return;
     const target = TYPED_WORDS[wordIdx];
     let t;
     if (typing) {
@@ -237,81 +128,106 @@ function Hero() {
       } else {
         t = setTimeout(() => setTyping(false), 2000);
       }
+    } else if (displayed.length > 0) {
+      t = setTimeout(() => setDisplayed(displayed.slice(0, -1)), 38);
     } else {
-      if (displayed.length > 0) {
-        t = setTimeout(() => setDisplayed(displayed.slice(0, -1)), 38);
-      } else {
+      t = setTimeout(() => {
         setWordIdx((wordIdx + 1) % TYPED_WORDS.length);
         setTyping(true);
-      }
+      }, 250);
     }
     return () => clearTimeout(t);
-  }, [displayed, typing, wordIdx]);
+  }, [displayed, typing, wordIdx, reduced]);
+
+  if (reduced) return TYPED_WORDS[2];
+  return <>{displayed}<span className="caret" /></>;
+}
+
+function Hero() {
+  const heroRef = useRef(null);
+  const glowRef = useRef(null);
+
+  // Soft light that trails the cursor — desktop pointers only, one write per frame.
+  useEffect(() => {
+    const hero = heroRef.current;
+    const glow = glowRef.current;
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches || prefersReducedMotion()) return;
+    let raf = 0;
+    const move = e => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const r = hero.getBoundingClientRect();
+        glow.style.transform = `translate3d(${e.clientX - r.left}px, ${e.clientY - r.top}px, 0)`;
+      });
+    };
+    hero.addEventListener("pointermove", move, { passive: true });
+    return () => {
+      hero.removeEventListener("pointermove", move);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
 
   return (
-    <section id="hero" style={{
-      minHeight: "100vh",
-      display: "flex", flexDirection: "column", justifyContent: "center",
-      padding: "8rem clamp(1.5rem, 5vw, 4rem) 5rem",
-      position: "relative", overflow: "hidden",
-    }}>
-      <div style={{
-        position: "absolute", right: -120, top: "42%", transform: "translateY(-50%)",
-        width: 560, height: 560, borderRadius: "50%", pointerEvents: "none",
-        background: `radial-gradient(circle, ${C.green}1e 0%, transparent 68%)`,
-      }} />
-      <div style={{
-        position: "absolute", left: -100, bottom: "12%",
-        width: 360, height: 360, borderRadius: "50%", pointerEvents: "none",
-        background: `radial-gradient(circle, ${C.accent}12 0%, transparent 70%)`,
-      }} />
+    <section id="hero" className="hero" ref={heroRef}>
+      <div className="hero-glow" ref={glowRef} aria-hidden="true" />
+      <svg className="hero-rings" viewBox="0 0 400 400" fill="none" stroke="currentColor" strokeWidth="0.5" aria-hidden="true">
+        {[190, 164, 138, 112, 86, 60, 34].map((r, i) => (
+          <ellipse key={r} cx="200" cy="200" rx={r} ry={r * (0.78 + (i % 3) * 0.07)} transform={`rotate(${i * 24} 200 200)`} />
+        ))}
+      </svg>
 
-      <span className="fu0" style={{
-        display: "inline-flex", alignItems: "center", gap: 10,
-        fontSize: "0.74rem", letterSpacing: "0.17em", textTransform: "uppercase",
-        color: C.greenLight, fontWeight: 500, marginBottom: "1.6rem",
-      }}>
-        <span style={{ width: 30, height: 1, background: C.greenLight }} />
-        Web Developer · Surabaya, Indonesia
-      </span>
+      <div className="hero-inner">
+        <span className="label fu">Web Developer · Surabaya, Indonesia</span>
 
-      <h1 className="fu1" style={{
-        fontFamily: "'Barium', 'Georgia', serif",
-        fontSize: "clamp(3rem, 7vw, 6.2rem)",
-        lineHeight: 1.05, fontWeight: 400, color: C.cream,
-        marginBottom: "1rem", letterSpacing: "-0.01em", maxWidth: 780,
-      }}>
-        I craft clean<br />
-        <span style={{ color: C.accent }}>
-          {displayed}
-          <span className="cursor-blink" />
-        </span>
-      </h1>
+        <h1 className="hero-title fu" style={{ "--d": "0.12s" }} aria-label="I craft clean web experiences.">
+          <span aria-hidden="true">I craft clean</span>
+          <span className="hero-typed" aria-hidden="true"><Typed /></span>
+        </h1>
 
-      <p className="fu2" style={{
-        fontSize: "1rem", color: C.pale, maxWidth: 430,
-        lineHeight: 1.82, marginBottom: "2.6rem",
-      }}>
-        Fully hand-coded pages in HTML, CSS &amp; React. Built for speed,
-        designed to impress, structured to turn visitors into customers.
-      </p>
+        <p className="hero-lead fu" style={{ "--d": "0.26s" }}>
+          Fully hand-coded pages in HTML, CSS &amp; React. Built for speed,
+          designed to impress, structured to turn visitors into customers.
+        </p>
 
-      <div className="fu3" style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-        <BtnPrimary href="#work">See my work →</BtnPrimary>
-        <BtnOutline href="#contact">Let's talk</BtnOutline>
+        <div className="hero-actions fu" style={{ "--d": "0.4s" }}>
+          <a href="#work" className="btn btn--primary">See my work <span>→</span></a>
+          <a href="#contact" className="btn btn--outline">Let's talk</a>
+        </div>
       </div>
 
-      <div className="fu4" style={{
-        position: "absolute", bottom: "2.5rem",
-        left: "clamp(1.5rem, 5vw, 4rem)",
-        display: "flex", alignItems: "center", gap: 10,
-        fontSize: "0.7rem", letterSpacing: "0.14em", textTransform: "uppercase",
-        color: C.muted,
-      }}>
-        <span className="scroll-line" />
-        Scroll to explore
-      </div>
+      <a href="#about" className="badge fu" style={{ "--d": "0.6s" }} aria-label="Scroll to about section">
+        <svg viewBox="0 0 136 136" aria-hidden="true">
+          <defs>
+            <path id="badge-circle" d="M68 68 m-56 0 a56 56 0 1 1 112 0 a56 56 0 1 1 -112 0" />
+          </defs>
+          <text>
+            <textPath href="#badge-circle">Available for freelance ✦ Scroll to explore ✦</textPath>
+          </text>
+        </svg>
+        <span aria-hidden="true">↓</span>
+      </a>
+
+      <ul className="hero-meta fu" style={{ "--d": "0.55s" }}>
+        <li><small>Based in</small><strong>Surabaya, Indonesia</strong></li>
+        <li><small>Studying at</small><strong>ISTTS</strong></li>
+        <li><small>Status</small><strong>Open for freelance</strong></li>
+      </ul>
     </section>
+  );
+}
+
+// ─── MARQUEE ─────────────────────────────────────────────────────────────────
+
+const MARQUEE = ["Landing pages", "React interfaces", "Responsive layouts", "Hand-coded", "Fast by default", "Conversion-focused"];
+
+function Marquee() {
+  return (
+    <div className="marquee" aria-hidden="true">
+      <div className="marquee-track">
+        {[...MARQUEE, ...MARQUEE].map((m, i) => <span key={i}>{m}</span>)}
+      </div>
+    </div>
   );
 }
 
@@ -320,68 +236,55 @@ function Hero() {
 function About() {
   const stack = ["HTML5", "CSS3", "JavaScript", "React", "Responsive", "Figma", "Git", "Vite", "EmailJS", "TailwindCSS"];
   return (
-    <section id="about" style={{ padding: "7rem clamp(1.5rem, 5vw, 4rem)", background: C.bgSection }}>
-      <SectionLabel>About me</SectionLabel>
-      <div className="about-grid" style={{
-        display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1.45fr)",
-        gap: "5rem", alignItems: "start",
-      }}>
-        <div className="about-sticky" style={{ position: "sticky", top: "12rem", display: "flex", flexDirection: "column" }}>
-          <div style={{
-            width: "100%", maxWidth: 260, aspectRatio: "3/4",
-            background: C.bgCard, border: `1px solid ${C.border}`,
-            borderRadius: 8, display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center",
-            gap: 8, marginBottom: "1.6rem", position: "relative", overflow: "hidden",
-          }}>
-            <img
-              src={myFace}
-              alt="Christian Teja"
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-            <span style={{
-              position: "absolute", bottom: 12, right: 12,
-              background: C.greenLight, color: C.bg,
-              fontSize: "0.67rem", letterSpacing: "0.08em", textTransform: "uppercase",
-              padding: "4px 10px", borderRadius: 3, fontWeight: 700,
-            }}>Available</span>
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 7, maxWidth: "100%", overflow: "hidden" }}>
-            {stack.map(s => (
-              <span key={s} style={{
-                fontFamily: "'DM Mono', monospace", fontSize: "0.7rem",
-                color: C.greenLight, background: `${C.green}22`,
-                border: `1px solid ${C.border}`, padding: "4px 10px",
-                borderRadius: 3, letterSpacing: "0.04em",
-              }}>{s}</span>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <SectionTitle>Building web experiences with intention.</SectionTitle>
-          <p key={0} style={{ color: C.pale, lineHeight: 1.85, marginBottom: "1.3rem", fontSize: "0.97rem" }}>
-            Hi — I'm <strong style={{ color: C.cream }}>Christian <strong style={{ color: C.accent }}>Teja</strong> Pranata</strong>, a web developer based in Surabaya, Indonesia. I build landing pages for small businesses and founders who need more than something that looks decent — they need a page that gets people to act.
-          </p>
-          <p key={1} style={{ color: C.pale, lineHeight: 1.85, marginBottom: "1.3rem", fontSize: "0.97rem" }}>
-            Every project is hand-coded from scratch using HTML, CSS, and React. No builders, no templates — just lean, fast code built around one goal: turning visitors into inquiries.
-          </p>
-
-          <div className="stats-grid" style={{
-            display: "grid", gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 1, background: C.border,
-            border: `1px solid ${C.border}`, borderRadius: 6,
-            overflow: "hidden", marginTop: "2.5rem",
-          }}>
-            {[["5+", "Projects completed"], ["100%", "Hand-coded output"], ["3", "Core technologies"]].map(([num, label]) => (
-              <div key={label} style={{
-                background: C.bgCard, padding: "1.4rem 1.2rem",
-                display: "flex", flexDirection: "column", gap: 4,
-              }}>
-                <span style={{ fontFamily: "'Barium', serif", fontSize: "2.2rem", color: C.accent, lineHeight: 1 }}>{num}</span>
-                <span style={{ fontSize: "0.78rem", color: C.muted, letterSpacing: "0.04em" }}>{label}</span>
+    <section id="about" className="section section--deep">
+      <div className="wrap">
+        <SectionLabel num="01">About me</SectionLabel>
+        <div className="about-grid">
+          <div className="about-side" data-reveal>
+            <div className="portrait">
+              <div className="portrait-frame">
+                <img src={myFace} alt="Christian Teja" loading="lazy" decoding="async" />
               </div>
-            ))}
+              <span className="available">Available</span>
+            </div>
+            <div className="stack">
+              {stack.map(s => <span key={s} className="chip">{s}</span>)}
+            </div>
+          </div>
+
+          <div className="about-body">
+            <SectionTitle>Building web experiences with <em>intention.</em></SectionTitle>
+            <p data-reveal>
+              Hi — I'm <strong>Christian <b>Teja</b> Pranata</strong>, a web developer based in Surabaya, Indonesia. I build landing pages for small businesses and founders who need more than something that looks decent — they need a page that gets people to act.
+            </p>
+            <p data-reveal>
+              I'm currently a college student at <strong>Institut Sains dan Teknologi Terapan Surabaya</strong>, sharpening my craft in the classroom while building real projects for real clients outside of it.
+            </p>
+            <p data-reveal>
+              Every project is hand-coded from scratch using HTML, CSS, and React. No builders, no templates — just lean, fast code built around one goal: turning visitors into inquiries.
+            </p>
+
+            <div className="edu" data-reveal>
+              <span className="edu-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width={22} height={22}>
+                  <path d="M2 9l10-5 10 5-10 5L2 9z" /><path d="M6 11.5V16c0 1.2 2.7 2.5 6 2.5s6-1.3 6-2.5v-4.5M22 9v6" />
+                </svg>
+              </span>
+              <div>
+                <small>Education · Currently enrolled</small>
+                <h3>Institut Sains dan Teknologi Terapan Surabaya</h3>
+                <span>ISTTS · College student · Surabaya, Indonesia</span>
+              </div>
+            </div>
+
+            <div className="stats" data-reveal>
+              {[["5+", "Projects completed"], ["100%", "Hand-coded output"], ["3", "Core technologies"]].map(([num, label]) => (
+                <div key={label}>
+                  <strong>{num}</strong>
+                  <span>{label}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -397,7 +300,7 @@ const SERVICES = [
     desc: "Fully hand-coded landing pages that communicate your value clearly and look great on every device.",
     tag: "HTML · CSS · React",
     Icon: () => (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width={20} height={20}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width={24} height={24}>
         <rect x="3" y="3" width="18" height="14" rx="2" /><path d="M8 21h8M12 17v4" />
       </svg>
     ),
@@ -407,7 +310,7 @@ const SERVICES = [
     desc: "Every page is built to look pixel-perfect on phones, tablets, and desktops — no compromises.",
     tag: "Responsive · Fluid Layout",
     Icon: () => (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width={20} height={20}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width={24} height={24}>
         <rect x="5" y="2" width="14" height="20" rx="2" /><path d="M12 18h.01" />
       </svg>
     ),
@@ -417,7 +320,7 @@ const SERVICES = [
     desc: "Clean minimal code with zero bloat — fast load times and better search engine rankings.",
     tag: "Fast · SEO-Friendly",
     Icon: () => (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width={20} height={20}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width={24} height={24}>
         <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
       </svg>
     ),
@@ -427,7 +330,7 @@ const SERVICES = [
     desc: "Bespoke interactive elements — animated heroes, smooth modals, carousels, and contact forms.",
     tag: "React · Hooks · State",
     Icon: () => (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width={20} height={20}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width={24} height={24}>
         <circle cx="12" cy="12" r="2" />
         <ellipse cx="12" cy="12" rx="10" ry="4" />
         <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)" />
@@ -440,7 +343,7 @@ const SERVICES = [
     desc: "Structure and hierarchy designed to guide visitors toward your call-to-action naturally.",
     tag: "CRO · UX-Informed",
     Icon: () => (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width={20} height={20}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width={24} height={24}>
         <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
       </svg>
     ),
@@ -450,56 +353,32 @@ const SERVICES = [
     desc: "Flexible revision rounds included. I stay available post-delivery to make sure everything is right.",
     tag: "Revisions · Support",
     Icon: () => (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width={20} height={20}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width={24} height={24}>
         <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
       </svg>
     ),
   },
 ];
 
-function ServiceCard({ title, desc, tag, Icon }) {
-  const [hov, setHov] = useState(false);
-  return (
-    <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      style={{
-        background: hov ? C.bgSection : C.bgCard,
-        border: `1px solid ${hov ? C.green : C.border}`,
-        borderRadius: 8, padding: "2rem 1.8rem",
-        transition: "all 0.22s",
-        transform: hov ? "translateY(-4px)" : "none",
-        cursor: "default",
-      }}
-    >
-      <div style={{
-        width: 42, height: 42, background: `${C.green}25`,
-        borderRadius: 6, marginBottom: "1.4rem",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        color: C.greenLight,
-      }}>
-        <Icon />
-      </div>
-      <h3 style={{ fontSize: "0.97rem", fontWeight: 500, color: C.cream, marginBottom: "0.6rem" }}>{title}</h3>
-      <p style={{ fontSize: "0.86rem", color: C.pale, lineHeight: 1.75 }}>{desc}</p>
-      <span style={{
-        display: "inline-block", marginTop: "1.3rem",
-        fontFamily: "'DM Mono', monospace", fontSize: "0.68rem",
-        color: C.muted, letterSpacing: "0.07em",
-      }}>{tag}</span>
-    </div>
-  );
-}
-
 function Services() {
   return (
-    <section id="services" style={{ padding: "7rem clamp(1.5rem, 5vw, 4rem)", background: C.bg }}>
-      <SectionLabel>What I offer</SectionLabel>
-      <SectionTitle>Services built for real results.</SectionTitle>
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-        gap: "1.3rem",
-      }}>
-        {SERVICES.map(s => <ServiceCard key={s.title} {...s} />)}
+    <section id="services" className="section">
+      <div className="wrap">
+        <SectionLabel num="02">What I offer</SectionLabel>
+        <SectionTitle>Services built for <em>real results.</em></SectionTitle>
+        <div className="services" data-reveal>
+          {SERVICES.map((s, i) => (
+            <article key={s.title} className="service">
+              <div className="service-top">
+                <s.Icon />
+                <span>{`0${i + 1}`}</span>
+              </div>
+              <h3>{s.title}</h3>
+              <p>{s.desc}</p>
+              <small>{s.tag}</small>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -514,60 +393,34 @@ const PROJECTS = [
 ];
 
 function ProjectRow({ num, title, desc, tags, link }) {
-  const [hov, setHov] = useState(false);
+  const Row = link ? "a" : "div";
+  const linkProps = link ? { href: link, target: "_blank", rel: "noopener noreferrer" } : {};
   return (
-    <div className="proj-row"
-      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      style={{
-        display: "grid", gridTemplateColumns: "72px 1fr auto", textAlign: "left",
-        alignItems: "center", gap: "2rem",
-        padding: "1.8rem 0", borderTop: `1px solid ${C.border}`, cursor: "default",
-      }}
-    >
-      <span style={{
-        fontFamily: "'DM Mono', monospace", fontSize: "0.71rem",
-        color: hov ? C.accent : `${C.muted}66`,
-        letterSpacing: "0.06em", transition: "color 0.2s",
-      }}>{num}</span>
-      <div>
-        {link ? (
-          <a href={link} target="_blank" rel="noopener noreferrer" style={{
-            fontSize: "1rem", fontWeight: 500,
-            color: hov ? C.cream : C.pale,
-            marginBottom: "0.25rem", transition: "color 0.2s",
-            textAlign: "left", textDecoration: "none", display: "block",
-          }}>{title} ↗</a>
-        ) : (
-          <p style={{
-            fontSize: "1rem", fontWeight: 500,
-            color: hov ? C.cream : C.pale,
-            marginBottom: "0.25rem", transition: "color 0.2s",
-          }}>{title}</p>
-        )}
-        <p style={{ fontSize: "0.82rem", color: C.muted }}>{desc}</p>
+    <Row className="work-row" data-reveal {...linkProps}>
+      <span className="work-num">{num}</span>
+      <div className="work-body">
+        <h3>{title}</h3>
+        <p>{desc}</p>
       </div>
-      <div className="proj-tags" style={{ display: "flex", gap: 7, flexWrap: "wrap", justifyContent: "flex-end" }}>
-        {tags.map(t => (
-          <span key={t} style={{
-            fontFamily: "'DM Mono', monospace", fontSize: "0.67rem",
-            color: C.pale, letterSpacing: "0.05em",
-            background: `${C.green}20`, padding: "3px 9px", borderRadius: 3,
-            border: `1px solid ${C.border}`,
-          }}>{t}</span>
-        ))}
+      <div className="work-tags">
+        {tags.map(t => <span key={t} className="chip">{t}</span>)}
       </div>
-    </div>
+      {link
+        ? <span className="work-arrow" aria-hidden="true">↗</span>
+        : <span className="work-arrow work-arrow--private" title="Private project — no public link">Private</span>}
+    </Row>
   );
 }
 
 function Projects() {
   return (
-    <section id="work" style={{ padding: "7rem clamp(1.5rem, 5vw, 4rem)", background: C.bgSection }}>
-      <SectionLabel>Selected work</SectionLabel>
-      <SectionTitle>Recent projects.</SectionTitle>
-      <div>
-        {PROJECTS.map(p => <ProjectRow key={p.num} {...p} />)}
-        <div style={{ borderTop: `1px solid ${C.border}` }} />
+    <section id="work" className="section section--deep">
+      <div className="wrap">
+        <SectionLabel num="03">Selected work</SectionLabel>
+        <SectionTitle>Recent <em>projects.</em></SectionTitle>
+        <div className="work">
+          {PROJECTS.map(p => <ProjectRow key={p.num} {...p} />)}
+        </div>
       </div>
     </section>
   );
@@ -583,30 +436,19 @@ const STEPS = [
 
 function Process() {
   return (
-    <section id="process" style={{ padding: "7rem clamp(1.5rem, 5vw, 4rem)", background: C.bg, textAlign: "center" }}>
-      <div style={{ display: "flex", justifyContent: "center" }}>
-        <SectionLabel>How I work</SectionLabel>
-      </div>
-      <SectionTitle>A simple, clear process.</SectionTitle>
-      <div className="step-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "2.5rem", maxWidth: 720, margin: "0 auto" }}>
-        {STEPS.map((s, i) => (
-          <div key={s.title} style={{ paddingTop: "2.5rem", position: "relative", textAlign: "center" }}>
-            <span style={{
-              display: "block", marginBottom: "1.2rem",
-              fontFamily: "'DM Mono', monospace", fontSize: "0.7rem",
-              color: C.greenLight, letterSpacing: "0.08em", textAlign: "center",
-            }}>{`0${i + 1}`}</span>
-            <div style={{ width: "100%", height: 1, background: C.border, marginBottom: "1.5rem", position: "relative" }}>
-              <span style={{
-                position: "absolute", left: "50%", transform: "translateX(-50%)", top: -3,
-                width: 7, height: 7, borderRadius: "50%",
-                background: C.greenLight, display: "block",
-              }} />
-            </div>
-            <h3 style={{ fontSize: "0.95rem", fontWeight: 500, color: C.cream, marginBottom: "0.5rem" }}>{s.title}</h3>
-            <p style={{ fontSize: "0.84rem", color: C.pale, lineHeight: 1.75 }}>{s.body}</p>
-          </div>
-        ))}
+    <section id="process" className="section">
+      <div className="wrap">
+        <SectionLabel num="04">How I work</SectionLabel>
+        <SectionTitle>A simple, <em>clear</em> process.</SectionTitle>
+        <ol className="steps">
+          {STEPS.map((s, i) => (
+            <li key={s.title} className="step" data-reveal style={{ "--d": `${i * 0.12}s` }}>
+              <span className="step-num" aria-hidden="true">{`0${i + 1}`}</span>
+              <h3>{s.title}</h3>
+              <p>{s.body}</p>
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   );
@@ -614,15 +456,23 @@ function Process() {
 
 // ─── CONTACT ─────────────────────────────────────────────────────────────────
 
+const LINKS = [
+  { kind: "Email",    label: "xtian120907@gmail.com", href: "mailto:xtian120907@gmail.com" },
+  { kind: "Threads",  label: "@chrs.tjp",             href: "https://www.threads.com/@chrs.tjp" },
+  { kind: "GitHub",   label: "kaidennxyz",            href: "https://github.com/kaidennxyz" },
+  { kind: "WhatsApp", label: "+62 813-3534-5484",     href: "https://wa.me/6281335345484" },
+];
+
 function Contact() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
-  const [sent, setSent] = useState(false);
+  const [status, setStatus] = useState("idle"); // idle | sending | sent | error
 
   const handleChange = e => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   const handleSubmit = e => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.message) return;
+    if (!form.name || !form.email || !form.message || status === "sending") return;
 
+    setStatus("sending");
     emailjs.send(
       'service_ujet3qw',
       'template_z7ohboc',
@@ -633,102 +483,65 @@ function Contact() {
       },
       'zgOoGWq3XjT0aKHtv'
     )
-    .then(() => setSent(true))
-    .catch(() => alert('Something went wrong. Please try again.'));
+    .then(() => setStatus("sent"))
+    .catch(() => setStatus("error"));
   };
-
-  const inputStyle = {
-    background: C.bgCard, border: `1px solid ${C.border}`,
-    borderRadius: 4, padding: "0.75rem 1rem",
-    fontFamily: "'DM Sans', sans-serif", fontSize: "0.92rem",
-    color: C.cream, outline: "none", resize: "none",
-    width: "100%", transition: "border-color 0.2s",
-  };
-
-  const LINKS = [
-    { label: "xtian120907@gmail.com", href: "mailto:xtian120907@gmail.com" },
-    { label: "threads.com/@chrs.tjp", href: "https://www.threads.com/@chrs.tjp" },
-    { label: "github.com/kaidennxyz", href: "https://github.com/kaidennxyz" },
-    { label: "+62 813-3534-5484",     href: "https://wa.me/6281335345484" },
-  ];
 
   return (
-    <section id="contact" style={{ padding: "7rem clamp(1.5rem, 5vw, 4rem)", background: C.bgSection }}>
-      <div className="contact-grid" style={{
-        display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1.1fr)",
-        gap: "5rem", alignItems: "start",
-      }}>
-        <div>
-          <SectionLabel>Get in touch</SectionLabel>
-          <h2 style={{
-            fontFamily: "'Barium', 'Georgia', serif",
-            fontSize: "clamp(2.6rem, 8vw, 3.2rem)",
-            fontWeight: 400, color: C.cream,
-            lineHeight: 1.1, marginBottom: "1.2rem", letterSpacing: "-0.01em",
-          }}>
-            Let's build something together.
-          </h2>
-          <p style={{ color: C.pale, lineHeight: 1.78, marginBottom: "2rem", fontSize: "0.96rem" }}>
-            Have a project in mind or just want to say hi? Fill in the form or reach me directly through any of the channels below.
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
-            {LINKS.map(({ label, href }) => (
-              <a key={label} href={href}
-                style={{ display: "flex", alignItems: "center", gap: 12, fontSize: "0.88rem", color: C.pale, textDecoration: "none", transition: "color 0.15s" }}
-                onMouseEnter={e => (e.currentTarget.style.color = C.cream)}
-                onMouseLeave={e => (e.currentTarget.style.color = C.pale)}
-              >
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.greenLight, flexShrink: 0 }} />
-                {label}
-              </a>
-            ))}
-          </div>
-        </div>
-
-        {sent ? (
-          <div style={{
-            background: C.bgCard, border: `1px solid ${C.border}`,
-            borderRadius: 8, padding: "3rem 2rem",
-            display: "flex", flexDirection: "column", alignItems: "center",
-            gap: "1rem", textAlign: "center",
-          }}>
-            <span style={{ fontSize: "2.5rem", color: C.greenLight }}>✓</span>
-            <h3 style={{ color: C.cream, fontSize: "1.1rem", fontWeight: 500 }}>Message sent!</h3>
-            <p style={{ color: C.pale, fontSize: "0.9rem" }}>
-              Thanks for reaching out — I'll get back to you within 1–2 business days.
+    <section id="contact" className="section section--deep">
+      <div className="wrap">
+        <div className="contact" data-reveal>
+          <div>
+            <div className="label">Get in touch</div>
+            <h2 className="title">Let's build something <em>together.</em></h2>
+            <p className="contact-lead">
+              Have a project in mind or just want to say hi? Fill in the form or reach me directly through any of the channels below.
             </p>
+            <ul className="contact-links">
+              {LINKS.map(({ kind, label, href }) => (
+                <li key={kind}>
+                  <a href={href} {...(href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
+                    <small>{kind}</small>
+                    {label}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}>
-            {[
-              { label: "Your name",     name: "name",  type: "text",  placeholder: "Your Name..." },
-              { label: "Email address", name: "email", type: "email", placeholder: "youremail@example.com" },
-            ].map(({ label, name, type, placeholder }) => (
-              <div key={name} style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                <label style={{ fontSize: "0.74rem", letterSpacing: "0.1em", textTransform: "uppercase", color: C.muted, fontWeight: 500 }}>
-                  {label}
-                </label>
-                <input type={type} name={name} value={form[name]} onChange={handleChange} placeholder={placeholder}
-                  style={inputStyle}
-                  onFocus={e => (e.target.style.borderColor = C.greenLight)}
-                  onBlur={e => (e.target.style.borderColor = C.border)}
+
+          {status === "sent" ? (
+            <div className="sent" role="status">
+              <span className="sent-mark" aria-hidden="true">✓</span>
+              <h3>Message sent!</h3>
+              <p>Thanks for reaching out — I'll get back to you within 1–2 business days.</p>
+            </div>
+          ) : (
+            <form className="form" onSubmit={handleSubmit}>
+              {[
+                { label: "Your name",     name: "name",  type: "text",  placeholder: "Your Name...",          autoComplete: "name" },
+                { label: "Email address", name: "email", type: "email", placeholder: "youremail@example.com", autoComplete: "email" },
+              ].map(({ label, name, ...rest }) => (
+                <div key={name} className="field">
+                  <label htmlFor={`f-${name}`}>{label}</label>
+                  <input id={`f-${name}`} name={name} value={form[name]} onChange={handleChange} required {...rest} />
+                </div>
+              ))}
+              <div className="field">
+                <label htmlFor="f-message">Tell me about your project</label>
+                <textarea id="f-message" name="message" value={form.message} onChange={handleChange}
+                  placeholder="I need a landing page for my new product launch..."
+                  rows={4} required
                 />
               </div>
-            ))}
-            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-              <label style={{ fontSize: "0.74rem", letterSpacing: "0.1em", textTransform: "uppercase", color: C.muted, fontWeight: 500 }}>
-                Tell me about your project
-              </label>
-              <textarea name="message" value={form.message} onChange={handleChange}
-                placeholder="I need a landing page for my new product launch..."
-                rows={5} style={inputStyle}
-                onFocus={e => (e.target.style.borderColor = C.greenLight)}
-                onBlur={e => (e.target.style.borderColor = C.border)}
-              />
-            </div>
-            <BtnPrimary onClick={handleSubmit} style={{ alignSelf: "flex-start" }}>Send message →</BtnPrimary>
-          </form>
-        )}
+              {status === "error" && (
+                <p className="form-error" role="alert">Something went wrong. Please try again.</p>
+              )}
+              <button type="submit" className="btn btn--ink" disabled={status === "sending"}>
+                {status === "sending" ? "Sending…" : <>Send message <span>→</span></>}
+              </button>
+            </form>
+          )}
+        </div>
       </div>
     </section>
   );
@@ -738,20 +551,13 @@ function Contact() {
 
 function Footer() {
   return (
-    <footer style={{
-      background: "#0a1510",
-      color: `${C.muted}99`,
-      padding: "2rem clamp(1.5rem, 5vw, 4rem)",
-      display: "flex", alignItems: "center",
-      justifyContent: "space-between", flexWrap: "wrap", gap: "0.8rem",
-      fontSize: "0.78rem", letterSpacing: "0.05em",
-      borderTop: `1px solid ${C.border}`,
-    }}>
-      <span style={{ fontFamily: "'Barium', serif", fontSize: "1.1rem", color: `${C.pale}88` }}>
-        Teja<span style={{ color: `${C.accent}88` }}>.</span>
-      </span>
-      <span>© 2026 Christian Teja · Hand-crafted with HTML, CSS &amp; React</span>
-      <span>Surabaya, Indonesia</span>
+    <footer className="footer">
+      <div className="footer-word" aria-hidden="true">Teja.</div>
+      <div className="footer-row">
+        <span>© {new Date().getFullYear()} Christian Teja · Hand-crafted with HTML, CSS &amp; React</span>
+        <span>Surabaya, Indonesia</span>
+        <a href="#">Back to top ↑</a>
+      </div>
     </footer>
   );
 }
@@ -759,12 +565,15 @@ function Footer() {
 // ─── ROOT ─────────────────────────────────────────────────────────────────────
 
 export default function Portfolio() {
+  useReveal();
   return (
     <>
-      <GlobalStyles />
+      <a href="#about" className="skip-link">Skip to content</a>
+      <div className="progress" aria-hidden="true" />
       <Nav />
       <main>
         <Hero />
+        <Marquee />
         <About />
         <Services />
         <Projects />
