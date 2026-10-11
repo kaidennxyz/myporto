@@ -210,7 +210,7 @@ function Hero() {
 
       <ul className="hero-meta fu" style={{ "--d": "0.55s" }}>
         <li><small>Based in</small><strong>Surabaya, Indonesia</strong></li>
-        <li><small>Studying at</small><strong>ISTTS</strong></li>
+        <li><small>Studying at</small><strong><a className="text-link" href="https://istts.ac.id" target="_blank" rel="noopener noreferrer">ISTTS</a></strong></li>
         <li><small>Status</small><strong>Open for freelance</strong></li>
       </ul>
     </section>
@@ -258,13 +258,13 @@ function About() {
               Hi — I'm <strong>Christian <b>Teja</b> Pranata</strong>, a web developer based in Surabaya, Indonesia. I build landing pages for small businesses and founders who need more than something that looks decent — they need a page that gets people to act.
             </p>
             <p data-reveal>
-              I'm currently a college student at <strong>Institut Sains dan Teknologi Terapan Surabaya</strong>, sharpening my craft in the classroom while building real projects for real clients outside of it.
+              I'm currently a college student at <strong><a className="text-link" href="https://istts.ac.id" target="_blank" rel="noopener noreferrer">Institut Sains dan Teknologi Terpadu Surabaya</a></strong>, sharpening my craft in the classroom while building real projects for real clients outside of it.
             </p>
             <p data-reveal>
               Every project is hand-coded from scratch using HTML, CSS, and React. No builders, no templates — just lean, fast code built around one goal: turning visitors into inquiries.
             </p>
 
-            <div className="edu" data-reveal>
+            <a className="edu" data-reveal href="https://istts.ac.id" target="_blank" rel="noopener noreferrer">
               <span className="edu-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width={22} height={22}>
                   <path d="M2 9l10-5 10 5-10 5L2 9z" /><path d="M6 11.5V16c0 1.2 2.7 2.5 6 2.5s6-1.3 6-2.5v-4.5M22 9v6" />
@@ -272,10 +272,11 @@ function About() {
               </span>
               <div>
                 <small>Education · Currently enrolled</small>
-                <h3>Institut Sains dan Teknologi Terapan Surabaya</h3>
+                <h3>Institut Sains dan Teknologi Terpadu Surabaya</h3>
                 <span>ISTTS · College student · Surabaya, Indonesia</span>
               </div>
-            </div>
+              <span className="edu-arrow" aria-hidden="true">↗</span>
+            </a>
 
             <div className="stats" data-reveal>
               {[["5+", "Projects completed"], ["100%", "Hand-coded output"], ["3", "Core technologies"]].map(([num, label]) => (
